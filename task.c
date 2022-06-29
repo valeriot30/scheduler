@@ -7,8 +7,9 @@ int create_task(task *my_task, int pid, int arrivalTime, int burstTime) {
 
 	(*my_task)->pid = pid;
 	(*my_task)->arrivalTime = arrivalTime;
+	(*my_task)->burstTime = burstTime;
 	(*my_task)->waitingTime = 0;
-	(*my_task)->remainingTime = burstTime;
+	(*my_task)->remainingTime = arrivalTime;
 	(*my_task)->state = ACTIVE;
 
 	return 0;

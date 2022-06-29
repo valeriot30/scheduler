@@ -1,8 +1,6 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-
+#include "time.h"
 #include "queues.h"
+
 
 
 queues global_queue;
@@ -287,7 +285,6 @@ void add_task_menu() {
 	int arrivalTime = 0;
 	int pid, burstTime;
 
-
 	if(is_queue_list_empty(global_queue)) {
 		printf("[-] La coda globale di processi è vuota, vuoi aggiungere una coda? (y/n): ");
 		
@@ -316,11 +313,11 @@ void add_task_menu() {
 	printf("\t| Tempo richiesto:  ");
 	scanf("%d", &burstTime);
 
-		// initialize
+	srand(time(NULL));
 
-	arrivalTime = rand() % (16); // 0 - 15 
+	arrivalTime = rand() % (burstTime) + 1;
 
-	int result = add_task(global_queue, pid, arrivalTime, burstTime); 
+	int result = add_task(global_queue, pid, burstTime, burstTime); 
 
 	if(result == 2) {
 		printf("[-] Errore nella creazione del processo [%d]", pid);

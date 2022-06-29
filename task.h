@@ -7,6 +7,8 @@
 #define TASK_H
 
 #define MAX_TASK_LENGTH 36
+#define MAX_TASK_TIME 50000
+#define MAX_TASK_PID 99999
 
 struct task {
 	int pid;

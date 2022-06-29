@@ -49,6 +49,7 @@ int add_queue(queues* queue_list, char queue_name[], int priority, int timeQuant
 
 int add_task(queues queue_list, int pid, int burstTime, int remainingTime) {
 
+
 	if(queue_list == NULL) return 2;
 
 	task task;
@@ -104,6 +105,36 @@ queue get_queue(queues queue_list, char queue_name[]) {
 	}
 
 	return NULL;
+}
+
+int move_task(queues queue_list, task taskToMove) {
+
+	task newTask;
+
+	if(queue_list == NULL) return 1;
+
+	if(taskToMove == NULL) return 1;
+
+	//TODO should use getters 
+
+	int result = create_task(&newTask, taskToMove->pid, taskToMove->burstTime, taskToMove->remainingTime);
+
+
+	if(result == 1) {
+		free(newTask);
+		return 1;
+	}
+
+	if(queue_list->next == NULL) {
+		destroy_task(&newTask);
+		return 1;
+	}
+
+	int enqueueResult = enqueue(queue_list->next->queue, newTask);
+
+	if(enqueueResult == 1) return 1;
+
+	return 0;
 }
 
 int kill_task(queues *queue_list, char queue_name[], int pid) {
@@ -164,34 +195,42 @@ int kill_queue(queues *queue_list, char queue_name[]) {
 }
 
 int execute_queue(queues queue_node) {
+
+
+
     while(!is_empty(queue_node->queue)) {
+
         task frontTask;
 
         int result = dequeue(queue_node->queue, &frontTask);
 
-        if(result) return 1;
-
-        
-
-        frontTask->remainingTime--;
+        if(result) return 1;     
 
 	    frontTask->burstTime++;
+
+        frontTask->remainingTime--;
 
         int burstTime = frontTask->burstTime;
         int remainingTime = frontTask->remainingTime;
         int quantum = queue_node->queue->timeQuantum;
 
+        printf("%d", remainingTime);
+
         if(remainingTime > 0) {
 
             task taskToEnqueue;
 
-            int newResult = create_task(&taskToEnqueue, frontTask->pid, frontTask->remainingTime, frontTask->burstTime); // copy
+            int newResult = create_task(&taskToEnqueue, frontTask->pid, remainingTime, remainingTime); // copy
 
             if(newResult == 1) return 1;
 
             newResult = enqueue(queue_node->queue, taskToEnqueue);
 
             if(newResult == 1) return 1;
+
+        } else {
+        	//kill_task(&queue_node, queue_node->queue->name, frontTask->pid);
+        	return 1;
         }
 
         print_queue(queue_node->queue);

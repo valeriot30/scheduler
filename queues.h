@@ -18,7 +18,7 @@ int add_queue(queues* queues, char queue_name[], int priority, int timeQuantum);
 
 int add_task(queues queues, int pid, int burstTime, int remainingTime); // aggiunge un processo alla prima coda
 
-int move_task(queues queues, int pid); // muvoe un processo alla coda successiva
+int move_task(queues queues, task task); // muove un processo alla coda successiva
 
 int kill_queue(queues* queues, char queue_name[]); // elimina una coda
 

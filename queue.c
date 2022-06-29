@@ -1,7 +1,7 @@
 #include "queue.h"
 
 int create_queue(queue* my_queue, char name[], int priority, int timeQuantum) {
-	*my_queue = (queue) malloc(sizeof(queue));
+	*my_queue = (queue) malloc(sizeof(struct queue));
 
 	if((*my_queue) == NULL) return 1;
 
@@ -45,24 +45,26 @@ int enqueue(queue queue, task task) {
 
 int dequeue(queue queue, task* task){
 
+    //il parametro passato non e' valido
     if(queue == NULL) return 2;
-    
-    if(is_empty(queue)) return 1;
-
-    if(task == NULL) return 1;
-
+    //verifico se la coda e' vuota ed eventualmente restituisco 1
+    if(is_empty(queue)==1) return 1;
+    //popolo elem con l'elemento in testa alla coda
     *task = queue->head;
-
-    struct task* temp = queue->head;
-
-    if(queue->head->next == NULL) {
+    //uso un puntatore di appoggio per tenere traccia del nodo in testa alla coda
+    struct task* p = queue->head;
+    //verifico se c'e' un solo elemento in coda
+    if(queue->head->next == NULL)
+        //se lo e' devo modificare anche tail
         queue->tail = NULL;
-    }
-
+    //aggiorno la testa della coda
     queue->head = queue->head->next;
+    //libero la memoria del nodo che era in testa alla coda
+    //free(p);
 
     decrement_size(queue);
-    free(temp);
+
+    //tutto e' andato a buon fine
     return 0;
 }
 
@@ -91,12 +93,11 @@ task peek(queue queue) {
 }
 
 int is_empty(queue queue){
-    if(queue == NULL) return 2;
-    
-    if(queue->head == NULL && queue->tail == NULL)
+    if(queue->head == NULL && queue->tail == NULL) {
         return 1;
-    else
+    } else {
         return 0;
+    }
 }
 
 
