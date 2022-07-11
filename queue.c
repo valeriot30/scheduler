@@ -1,6 +1,6 @@
 #include "queue.h"
 
-int create_queue(queue* my_queue, char name[], int priority, int timeQuantum) {
+int create_queue(queue* my_queue, char name[], int timeQuantum) {
 	*my_queue = (queue) malloc(sizeof(struct queue));
 
 	if((*my_queue) == NULL) return 1;
@@ -12,13 +12,24 @@ int create_queue(queue* my_queue, char name[], int priority, int timeQuantum) {
 
     (*my_queue)->timeQuantum = timeQuantum;
 
-    (*my_queue)->state = ACTIVE;  
-
-    (*my_queue)->priority = 0;  
+    set_queue_state(*my_queue, ACTIVE);
 
 	set_name((*my_queue), name);
 
 	return 0;
+}
+
+int destroy_queue(queue* queue) {
+    if(*queue == NULL) return 1;
+
+    // ci assicuriamo di svuotare la coda prima
+    int result = clear(queue);
+    
+    if(result == 1) return 1;
+
+    free(*queue);
+    *queue = NULL;
+    return 0;
 }
 
 int enqueue(queue queue, task task) {
@@ -29,7 +40,7 @@ int enqueue(queue queue, task task) {
 
     task->next = NULL;
     
-    if(is_empty(queue) == 1) {
+    if(is_empty(queue)) {
         queue->head = task;
     }
     else {
@@ -42,47 +53,53 @@ int enqueue(queue queue, task task) {
 
     return 0;
 }
-
 int dequeue(queue queue, task* task){
 
-    //il parametro passato non e' valido
     if(queue == NULL) return 2;
-    //verifico se la coda e' vuota ed eventualmente restituisco 1
-    if(is_empty(queue)==1) return 1;
-    //popolo elem con l'elemento in testa alla coda
-    *task = queue->head;
-    //uso un puntatore di appoggio per tenere traccia del nodo in testa alla coda
-    struct task* p = queue->head;
-    //verifico se c'e' un solo elemento in coda
-    if(queue->head->next == NULL)
-        //se lo e' devo modificare anche tail
-        queue->tail = NULL;
-    //aggiorno la testa della coda
-    queue->head = queue->head->next;
-    //libero la memoria del nodo che era in testa alla coda
-    //free(p);
 
+    if(task == NULL) return 1;
+    
+    if(is_empty(queue)) return 1;
+    
+    *task = queue->head;
+    
+    if(queue->head->next == NULL) {
+        queue->tail = NULL;
+    }
+    
+
+    queue->head = queue->head->next;
+   
     decrement_size(queue);
 
     //tutto e' andato a buon fine
     return 0;
 }
 
-int clear(queue queue) {
+int find(queue queue, int pid, task* task) {
+    struct task* t = queue->head;
 
-    if(queue == NULL) return 1;
-
-    while(queue->head != NULL) {
-        task tmp = queue->head;
-
-        queue->head = queue->head->next;
-
-        free(tmp);
-
+    while(t != NULL) {
+        if(get_pid(t) == pid) {
+            *task = t; // copio
+            return 1;
+        }
+        t = t->next;
     }
 
-    //free(queue);
+    return 0;
+}
 
+int clear(queue* queue) {
+
+    if(*queue == NULL) return 1;
+
+    // svuota la coda
+    while((*queue)->head != NULL) {
+        task tmp = (*queue)->head;
+        (*queue)->head = (*queue)->head->next;
+        free(tmp);
+    }
     return 0;
 }
 
@@ -102,23 +119,16 @@ int is_empty(queue queue){
 
 
 void print_queue(queue queue) {
-	if(queue == NULL) {
-		printf("Coda [%s] non inizializzata.", queue->name);
-	}
 
 	struct task *temp = queue->head;
-
-    if(is_empty(queue) == 1) {
-        printf("\t Coda [%s] vuota.", queue->name);
-    }
 
     while(temp != NULL) {
         print_task(temp);
         temp = temp->next;
     }
 
-    //printf("%d", temp->pid);
-
+    free(temp);
+    
     printf("\n");
 }
 
@@ -129,10 +139,9 @@ int print_queue_full(queue queue) {
 
     task p = queue->head;
     
-
-    printf("\n\tNome \t Stato \t Processi \n");
-    printf("\t%s \t %d \t %d \n", queue->name, (int) queue->state, queue->size);
-    printf("\t--------------------\n");
+    printf("\n\tNome \t Stato \t Processi \t Quantum \n");
+    printf("\t%s \t %s \t %d \t %d \t \n", queue->name, getStateText(queue->state), queue->size, queue->timeQuantum);
+    printf("\t---------------------------------------\n");
 
     while(p != NULL){
         print_task(p);
@@ -150,10 +159,18 @@ int set_name(queue queue, char name[]) {
 	return 0;
 }
 
+int get_queue_state(queue queue) {
+    return queue->state;
+}
+
 int get_name(queue queue, char name[]) {
     if(queue == NULL) return 1;
     strcpy(name, queue->name);
     return 0;
+}
+
+int get_time_quantum(queue queue) {
+    return queue->timeQuantum;
 }
 
 int set_queue_state(queue queue, State state) {
@@ -163,31 +180,34 @@ int set_queue_state(queue queue, State state) {
     return 0;
 }
 
-int kill(queue* queue, int pid) {
-    struct task* r = (*queue)->head;
-    struct task* q = (*queue)->head;
+int kill(queue queue, int pid) {
+
+
+    task r = queue->head;
+    task q = queue->head;
 
     while((q != NULL) && (q->pid != pid)) {
+
         r = q;
         q = q->next;
-        pid = q->pid;
     } 
 
     if(q == NULL) return 2;
 
-    if(q == (*queue)->head) {
-        (*queue)->head =  (*queue)->head->next;
+    if(q == queue->head) {
+        queue->head =  queue->head->next;
     } else {
         r->next = q->next;
     }
 
     int result = destroy_task(&(q));
 
-    if(result == 1) return 2;
+    if(result == 1) return 3;
 
-    decrement_size((*queue));
+    decrement_size(queue);
 
     free(q);
+
     return 0;
 }
 
@@ -203,11 +223,50 @@ void decrement_size(queue queue) {
     queue->size--;
 }
 
-
-
 int size(queue queue) {
 
 	if(queue == NULL) { return 0; }
 
 	return queue->size;
+}
+
+void save_queue(queue queue, FILE* f) {
+
+    if(is_empty(queue)) return; // se è vuota non ha senso salvarla
+    
+    char name[MAX_QUEUE_NLENGTH];
+
+    get_name(queue, name);
+
+    int quantum = get_time_quantum(queue);
+
+    fprintf(f,"%s %d\n", name, quantum);
+
+    task t = queue->head;
+
+    while(t != NULL) {
+        save_task(t, f);
+        t = t->next;
+    }
+    fprintf(f, "-\n"); 
+}
+
+void load_queue(queue queue, FILE* f) {
+    // carico i processi
+
+    int pid, burstTime, remainingTime;
+
+    while(fscanf(f,"%d %d %d", &pid, &burstTime, &remainingTime) > 0){
+        
+        task task;
+
+        int result = create_task(&task, pid, burstTime, remainingTime);
+
+        if(result) return;
+
+        result = enqueue(queue, task);
+
+        if(result == 1) return;
+
+    };
 }

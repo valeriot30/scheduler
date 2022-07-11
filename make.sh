@@ -1,9 +1,6 @@
-#!/bin/bash
-
-gcc -g -c task.c
-gcc -g -c queue.c
-gcc -g -c queues.c
-gcc -g -c main.c
+gcc -c -g task.c
+gcc -c -g queues.c
+gcc -c -g queue.c
+gcc -c -g main.c
 gcc main.o queue.o task.o queues.o -o scheduler
-
 ./scheduler
